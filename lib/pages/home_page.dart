@@ -1,5 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:todo_app/data/database.dart';
 
 import 'package:todo_app/pages/widgets/todo_tile.dart';
 
@@ -11,12 +13,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final db = ToDoDatabase();
   final controller = TextEditingController();
-  final List todoList = [
-    ['Buy Bread', false],
-    ['Buy Milk', false],
-    ['Buy Egg', true],
-  ];
+  @override
+  void initState() {
+    super.initState();
+
+    db.loadData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,18 +35,19 @@ class _HomePageState extends State<HomePage> {
           backgroundColor: Colors.blueGrey.shade900,
         ),
         body: ListView.builder(
-            itemCount: todoList.length,
+            itemCount: db.todoList.length.toInt(),
             itemBuilder: (context, index) {
               return TodoTile(
-                taskCompleted: todoList[index][1],
-                title: todoList[index][0],
+                taskCompleted: db.todoList[index][1],
+                title: db.todoList[index][0],
                 onChanged: (value) {
                   checkboxChanged(index, value);
                 },
                 onDeleted: () {
                   setState(() {
-                    todoList.removeAt(index);
+                    db.todoList.removeAt(index);
                   });
+                  db.updateDataBase();
                 },
               );
             }),
@@ -62,8 +67,9 @@ class _HomePageState extends State<HomePage> {
               controller: controller,
               onPressedAdd: () {
                 setState(() {
-                  todoList.add([controller.text, false]);
+                  db.todoList.add([controller.text, false]);
                 });
+                db.updateDataBase();
                 Navigator.pop(context);
                 controller.clear();
               });
@@ -72,7 +78,8 @@ class _HomePageState extends State<HomePage> {
 
   void checkboxChanged(int index, bool? value) {
     return setState(() {
-      todoList[index][1] = value!;
+      db.todoList[index][1] = value!;
+      db.updateDataBase();
     });
   }
 }
